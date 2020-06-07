@@ -1,22 +1,22 @@
 extern crate json;
 
-#[path = "../../hashing/hashing_helper.rs"]
-mod hashing_helper;
 
 use crate::RequestHandler;
 use crate::RequestResponse;
-use hashing_helper::HashingHelper;
+use crate::HashingHelper;
 
 pub struct HashPasswordRequestHandler {
-  pub hasher : HashingHelper
+  pub hasher : Box<dyn HashingHelper>
 }
 
 impl RequestHandler for HashPasswordRequestHandler {
-  fn handle(&self, request_params: String, request_body: String) -> RequestResponse {
-    let parseResult = json::parse(request_body);
+  fn handle(&mut self, _request_params: String, request_body: String) -> RequestResponse {
+    let parse_result = json::parse(&request_body);
 
-    let bodyObject = parseResult.unwrap();
+    let mut body_object = parse_result.unwrap();
 
-    self.hasher.hash_string(bodyObject.remove("password").take_string().unwrap())
+    let hashed = self.hasher.hash_string(&body_object.remove("password").take_string().unwrap());
+
+    RequestResponse::new("200", &hashed)
   }
 }
